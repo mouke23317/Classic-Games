@@ -1,8 +1,10 @@
 #ifndef MENU_H_
 #define MENU_H_
-typedef short NUM;
-typedef unsigned char Mine;
+#define INPUTERROR 0
+
+typedef unsigned short NUM; //循环数用
+typedef unsigned char Mine; //雷格表示、部分更小数字需求
+
 void menu();
-Mine** init_matrix(NUM rows, NUM cols, Mine* block_Matrix[]);
 void matrixDispaly(NUM rows, NUM cols, Mine* input_matrix[]);
 #endif
