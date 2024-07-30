@@ -37,9 +37,10 @@ NUM custom_input(NUM *input_num)
 {
     // 自定义难度（矩阵大小）
     NUM result = 0;
-    /* code */
-    result = scanf("%hd", input_num);
+    NUM eat_time = 0;
+        /* code */
+    result = scanf("%hu", input_num);
     // 吃掉缓冲区
-    eat_buffer();
-    return result;
+    eat_time = eat_buffer();
+    return result && eat_time;
 }

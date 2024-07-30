@@ -61,19 +61,51 @@ void recycle_memory(NUM rows, Mine ***block_Matrix)
     *block_Matrix = NULL;
 }
 
-void set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM* random_max)
+NUM set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM *random_max)
 {
-    for (NUM i = 0; i < random_cycle; i++)
+    NUM copy_counter = 0;
+    Mine* copy_temp = NULL;
+    //复制棋盘坐标地址
+    Mine** copy_matrix = (Mine**)malloc(*random_max * sizeof(Mine*));
+    if (copy_matrix == NULL)
+    {
+        printf("复制失败，强制退出");
+        return 0;
+    }
+    
+    //行遍历
+    for (NUM i = 0; i < rows; i++)
+    {
+        //列遍历
+        for (NUM j = 0; j < cols; j++, copy_counter++)
+        {
+            copy_matrix[copy_counter] = &(input_matrix[i][j]);
+        }
+    }
+
+    //测试
+    // *(copy_matrix[99]) = '&';
+
+    //棋盘的所有的元素都将参与洗牌
+    for (NUM i = 0; i < *random_max; i++)
     {
         int random_NUM = rand() % (*random_max); // 将生成的随机数映射到区间0~rand_max - 1
-        NUM random_row = random_NUM / cols; // 根据随机数查询行索引
-        
-        NUM random_col = random_NUM % cols; // 根据随机数查询列索引
-        printf("%hd, %hd\n", random_row, random_col);
+        // NUM random_row = random_NUM / cols;      // 根据随机数查询行索引
+        // NUM random_col = random_NUM % cols; // 根据随机数查询列索引
 
-        input_matrix[random_row][random_col] = '&';
+        //根据上面生成的映射后随机数排列原始指针数列，调转地址排列，
+        copy_temp = copy_matrix[random_NUM];
+        copy_matrix[random_NUM] = copy_matrix[i];
+        copy_matrix[i] = copy_temp;
     }
-}
+    
+    //序列中的前面random_cycle个元素埋雷
+    for (NUM i = 0; i < random_cycle; i++)
+        *(copy_matrix[i]) = '&';
+
+    free(copy_matrix);
+    return 1;
+}  
 
 void game()
 {
@@ -81,16 +113,17 @@ void game()
     NUM cols = 0;
     Mine **block_Matrix = NULL;
     NUM random_cycle;
-    
+
+    // 自定义棋局大小
     printf("行区域：");
-    //自定义棋局大小
     while (custom_input(&rows) == 0 || rows == 0 || rows > MAX_SIZE)
-        printf("非法输入，重输入行区域：");
-    
+        printf("非法输入，行区域是一个小于100的纯阿拉伯数字，重输入行区域：");
+
     printf("列区域：");
     while (custom_input(&cols) == 0 || cols == 0 || cols > MAX_SIZE)
-        printf("非法输入，重输入列区域：");
-    
+        printf("非法输入，列区域是一个小于100的纯阿拉伯数字，重输入列区域：");
+
+    // 按照上述棋局大小分配内存空间
     block_Matrix = init_matrix(rows, cols);
 
     if (block_Matrix == NULL)
@@ -98,15 +131,23 @@ void game()
         printf("游戏初始化失败");
         return;
     }
-
     matrixDispaly(rows, cols, block_Matrix); // 布雷前
 
+    //自定义地雷数量
     printf("\n请输入地雷数量。");
     NUM random_max = rows * cols;
-    while (custom_input(&random_cycle) == 0 || random_cycle > random_max)
+    while (custom_input(&random_cycle) == 0 || random_cycle >= random_max)
         printf("非法输入，请重新输入地雷数量，地雷数量是一个小于棋盘格数大小的值！");
 
-    set_mine(random_cycle, rows, cols, block_Matrix, &random_max);
+    //根据地雷数量确定哈希表最大质数，并完成随机数到哈希表的映射
+    //eratosthenes(random_cycle);
+
+    if (set_mine(random_cycle, rows, cols, block_Matrix, &random_max) == 0)
+    {
+        printf("游戏布雷失败，本轮强制退出！");
+        return ;
+    }
+    
     matrixDispaly(rows, cols, block_Matrix); // 布雷后
     recycle_memory(rows, &block_Matrix);
     // printf("%0x", block_Matrix);
