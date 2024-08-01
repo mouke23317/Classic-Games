@@ -61,16 +61,15 @@ void recycle_memory(NUM rows, Mine ***block_Matrix)
     *block_Matrix = NULL;
 }
 
-NUM set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM *random_max)
+//二维数组重整为一维，可以入库
+Mine** reshape(NUM rows, NUM cols, NUM matrix_size, Mine* input_matrix[])
 {
-    NUM copy_counter = 0;
-    Mine* copy_temp = NULL;
-    //复制棋盘坐标地址
-    Mine** copy_matrix = (Mine**)malloc(*random_max * sizeof(Mine*));
-    if (copy_matrix == NULL)
+     NUM copy_counter = 0;
+     Mine** copy_arr = (Mine**)malloc(matrix_size * sizeof(Mine*));
+    if (copy_arr == NULL)
     {
         printf("复制失败，强制退出");
-        return 0;
+        return NULL;
     }
     
     //行遍历
@@ -79,12 +78,21 @@ NUM set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM *ra
         //列遍历
         for (NUM j = 0; j < cols; j++, copy_counter++)
         {
-            copy_matrix[copy_counter] = &(input_matrix[i][j]);
+            copy_arr[copy_counter] = &(input_matrix[i][j]);
         }
     }
-
+    return copy_arr;
+}
+NUM set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM *random_max)
+{
+    NUM copy_counter = 0;
+    Mine* copy_temp = NULL;
+    Mine** reshaped_matrix = reshape(rows, cols, *random_max, input_matrix);
+    if (reshaped_matrix == NULL)
+        return 0;
+    
     //测试
-    // *(copy_matrix[99]) = '&';
+    //*(copy_matrix[99]) = '&';
 
     //棋盘的所有的元素都将参与洗牌
     for (NUM i = 0; i < *random_max; i++)
@@ -94,18 +102,49 @@ NUM set_mine(NUM random_cycle, NUM rows, NUM cols, Mine *input_matrix[], NUM *ra
         // NUM random_col = random_NUM % cols; // 根据随机数查询列索引
 
         //根据上面生成的映射后随机数排列原始指针数列，调转地址排列，
-        copy_temp = copy_matrix[random_NUM];
-        copy_matrix[random_NUM] = copy_matrix[i];
-        copy_matrix[i] = copy_temp;
+        copy_temp = reshaped_matrix[random_NUM];
+        reshaped_matrix[random_NUM] = reshaped_matrix[i];
+        reshaped_matrix[i] = copy_temp;
     }
     
     //序列中的前面random_cycle个元素埋雷
     for (NUM i = 0; i < random_cycle; i++)
-        *(copy_matrix[i]) = '&';
-
-    free(copy_matrix);
+        *(reshaped_matrix[i]) = '&';
+    
+    for (NUM i = random_cycle; i < *random_max; i++)
+    {
+        *(reshaped_matrix[i]) = '0';
+    }
+    
+    free(reshaped_matrix);
     return 1;
 }  
+
+//设置边界提示，命中率确定算法中心，命中低的做中心
+void boundary_tips(NUM Mine_NUM, NUM rows, NUM cols, NUM matrix_size, Mine *input_matrix[])
+{
+    //降维打击
+    Mine** reshaped_matrix = reshape(rows, cols, matrix_size, input_matrix);
+    if(reshaped_matrix == NULL)
+        return;
+    if (Mine_NUM >= matrix_size / 2)
+    {
+        for (NUM i = 0; i < matrix_size; i++)
+        {
+            NUM up_basic = i - cols;
+            NUM down_basic = i + cols;
+            NUM right_basic = i + 1;
+            NUM left_basic = i - 1;
+            //区分9种类型的中心扩散九宫格
+            //判断上述的四个拓展位是否为负数
+            //是负数，不运算，不是负数就运算该拓展位相关的
+            //2024/8/1开发暂停记录，已同步github
+            
+            
+            
+        }
+    }
+}
 
 void game()
 {
